@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Monitoring System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f7ff;
+            color: #1e3c5c;
+        }
+
+        /* API Status Bar */
+        .api-status {
+            background: #fff;
+            border-bottom: 2px solid #e0e7ff;
+            padding: 8px 20px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: grey;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 5px #10b981;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1e3c5c;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1e3c5c;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            margin-bottom: 15px;
+            color: #1e3c5c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .severity-high {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .severity-medium {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .severity-low {
+            color: #10b981;
+        }
+
+        button {
+            background: #1e3c5c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #2c5a7a;
+        }
+
+        .add-btn {
+            background: #10b981;
+            margin-bottom: 15px;
+        }
+
+        .add-btn:hover {
+            background: #059669;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="api-status">
+        <div class="status-badge">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Checking connection...</span>
+        </div>
+        <div>Satellite Monitoring System v1.0</div>
+    </div>
+
+    <div class="container">
+        <h1>🛰️ Satellite Monitoring Dashboard</h1>
+        
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-title">Total Satellites</div>
+                <div class="stat-value" id="totalSatellites">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Active Alerts</div>
+                <div class="stat-value" id="activeAlerts">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Ground Stations</div>
+                <div class="stat-value" id="totalStations">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Operators</div>
+                <div class="stat-value" id="totalOperators">-</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📡 Recent Alerts</h2>
+            <table id="alertsTable">
+                <thead>
+                    <tr>
+                        <th>Alert ID</th>
+                        <th>Severity</th>
+                        <th>Description</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="alertsTableBody">
+                    <tr><td colspan="4" class="loading">Loading alerts...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🛰️ Satellites</h2>
+            <button class="add-btn" onclick="showAddSatelliteModal()">+ Add Satellite</button>
+            <table id="satellitesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Launch Date</th>
+                        <th>Orbit Type</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="satellitesTableBody">
+                    <tr><td colspan="5" class="loading">Loading satellites...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for Add Satellite -->
+    <div id="satelliteModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Satellite</h3>
+            <div id="modalError" class="error" style="display:none"></div>
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="satName" placeholder="Enter satellite name">
+            </div>
+            <div class="form-group">
+                <label>Launch Date</label>
+                <input type="date" id="satLaunchDate">
+            </div>
+            <div class="form-group">
+                <label>Orbit Type *</label>
+                <select id="satOrbitType">
+                    <option value="LEO">LEO (Low Earth Orbit)</option>
+                    <option value="GEO">GEO (Geostationary)</option>
+                    <option value="MEO">MEO (Medium Earth Orbit)</option>
+                    <option value="HEO">HEO (Highly Elliptical Orbit)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status *</label>
+                <select id="satStatus">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Maintenance">Maintenance</option>
+                </select>
+            </div>
+            <button onclick="addSatellite()">Save Satellite</button>
+            <button onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+    <h2>Run SQL Query</h2>
+
+    <textarea id="queryInput" rows="5" cols="80" placeholder="Write your SQL query here..."></textarea>
+    <br><br>
+    <button onclick="runQuery()">Run Query</button>
+
+    <div id="result" style="margin-top:20px;"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        // Check API connection
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    document.getElementById('statusDot').className = 'status-dot connected';
+                    document.getElementById('statusText').textContent = 'Connected to API';
+                    return true;
+                }
+            } catch (error) {
+                document.getElementById('statusDot').className = 'status-dot disconnected';
+                document.getElementById('statusText').textContent = 'API not connected - Make sure server is running';
+                return false;
+            }
+        }
+
+        // Load dashboard stats
+        async function loadStats() {
+            try {
+                const [satellites, alerts, stations, operators] = await Promise.all([
+                    fetch(`${API_BASE}/satellites`).then(r => r.json()),
+                    fetch(`${API_BASE}/alerts`).then(r => r.json()),
+                    fetch(`${API_BASE}/ground-stations`).then(r => r.json()),
+                    fetch(`${API_BASE}/operators`).then(r => r.json())
+                ]);
+                
+                document.getElementById('totalSatellites').textContent = satellites.length;
+                document.getElementById('activeAlerts').textContent = alerts.filter(a => a.Severity === 'High').length;
+                document.getElementById('totalStations').textContent = stations.length;
+                document.getElementById('totalOperators').textContent = operators.length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load alerts
+        async function loadAlerts() {
+            try {
+                const response = await fetch(`${API_BASE}/alerts`);
+                const alerts = await response.json();
+                const tbody = document.getElementById('alertsTableBody');
+                
+                if (alerts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">No alerts found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = alerts.slice(0, 5).map(alert => `
+                    <tr>
+                        <td>${alert.AlertID}</td>
+                        <td class="severity-${alert.Severity.toLowerCase()}">${alert.Severity}</td>
+                        <td>${alert.Description}</td>
+                        <td>${new Date(alert.CreatedAt).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
+        }
+
+        // Load satellites
+        async function loadSatellites() {
+            try {
+                const response = await fetch(`${API_BASE}/satellites`);
+                const satellites = await response.json();
+                const tbody = document.getElementById('satellitesTableBody');
+                
+                if (satellites.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">No satellites found</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = satellites.map(sat => `
+                    <tr>
+                        <td>${sat.satelliteId}</td>
+                        <td>${sat.name}</td>
+                        <td>${sat.launchDate || 'N/A'}</td>
+                        <td>${sat.orbitType}</td>
+                        <td>${sat.status}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading satellites:', error);
+                document.getElementById('satellitesTableBody').innerHTML = '<tr><td colspan="5">Error loading satellites</td></tr>';
+            }
+        }
+
+        // Add satellite
+        window.addSatellite = async function() {
+            const name = document.getElementById('satName').value;
+            const launchDate = document.getElementById('satLaunchDate').value;
+            const orbitType = document.getElementById('satOrbitType').value;
+            const status = document.getElementById('satStatus').value;
+            
+            if (!name) {
+                showModalError('Satellite name is required');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/satellites`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, launchDate, orbitType, status })
+                });
+                
+                if (response.ok) {
+                    closeModal();
+                    loadSatellites();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showModalError(error.error || 'Error adding satellite');
+                }
+            } catch (error) {
+                showModalError('Network error: ' + error.message);
+            }
+        };
+
+        window.showAddSatelliteModal = function() {
+            document.getElementById('satelliteModal').style.display = 'flex';
+            document.getElementById('modalError').style.display = 'none';
+            document.getElementById('satName').value = '';
+            document.getElementById('satLaunchDate').value = '';
+        };
+
+        window.closeModal = function() {
+            document.getElementById('satelliteModal').style.display = 'none';
+        };
+
+        function showModalError(message) {
+            const errorDiv = document.getElementById('modalError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Initialize dashboard
+        async function init() {
+            await checkConnection();
+            await loadStats();
+            await loadAlerts();
+            await loadSatellites();
+            
+            // Refresh every 30 seconds
+            setInterval(async () => {
+                await loadStats();
+                await loadAlerts();
+                await loadSatellites();
+            }, 30000);
+        }
+        function runQuery() {
+        const query = document.getElementById("queryInput").value;
+
+        fetch("http://localhost:3000/api/query", {
+            method: "POST",
+            headers: {
+            "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ query })
+        })
+            .then(res => {
+            console.log("RAW RESPONSE:", res); // debug
+            return res.json();
+            })
+            .then(data => {
+            console.log("DATA:", data); // debug
+            displayTable(data);
+            })
+            .catch(err => {
+            console.error("ERROR:", err);
+            document.getElementById("result").innerHTML = "Error: " + err;
+            });
+        }
+
+        function displayTable(data) {
+        const resultDiv = document.getElementById("result");
+
+        console.log("INSIDE displayTable:", data);
+
+        if (!data) {
+            resultDiv.innerHTML = "No data received";
+            return;
+        }
+
+        if (data.error) {
+            resultDiv.innerHTML = "Error: " + data.error;
+            return;
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+            resultDiv.innerHTML = "No results";
+            return;
+        }
+
+        let html = "<table border='1'><tr>";
+
+        Object.keys(data[0]).forEach(key => {
+            html += `<th>${key}</th>`;
+        });
+
+        html += "</tr>";
+
+        data.forEach(row => {
+            html += "<tr>";
+            Object.values(row).forEach(value => {
+            html += `<td>${value}</td>`;
+            });
+            html += "</tr>";
+        });
+
+        html += "</table>";
+
+        resultDiv.innerHTML = html;
+        }
+        
+        init();
+    </script>
+</body>
+</html>
