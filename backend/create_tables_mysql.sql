@@ -111,7 +111,8 @@ CREATE TABLE OperatorAssignments (
 INSERT INTO Satellites (Name, LaunchDate, OrbitType, Status) VALUES 
 ('AQUA-1', '2023-05-12', 'LEO', 'Active'),
 ('TERRA-X', '2022-11-01', 'GEO', 'Inactive'),
-('NOVA-3', '2024-01-20', 'MEO', 'Active');
+('NOVA-3', '2024-01-20', 'MEO', 'Active'),
+
 
 INSERT INTO Operators (Name, Role, Email) VALUES 
 ('Dr. Eva Green', 'Mission Director', 'eva@space.com'),

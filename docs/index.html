@@ -17,7 +17,6 @@
             color: #1e3c5c;
         }
 
-        /* API Status Bar */
         .api-status {
             background: #fff;
             border-bottom: 2px solid #e0e7ff;
@@ -170,6 +169,7 @@
             background: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
+            z-index: 1000;
         }
 
         .modal-content {
@@ -190,11 +190,12 @@
             font-weight: 500;
         }
 
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 8px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
+            font-family: inherit;
         }
 
         .error {
@@ -209,6 +210,45 @@
             text-align: center;
             padding: 20px;
             color: #6b7280;
+        }
+
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .query-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .query-section h2 {
+            margin-bottom: 15px;
+            color: #1e3c5c;
+        }
+
+        #queryInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .result-table {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .result-table table {
+            font-size: 12px;
         }
     </style>
 </head>
@@ -230,7 +270,7 @@
                 <div class="stat-value" id="totalSatellites">-</div>
             </div>
             <div class="stat-card">
-                <div class="stat-title">Active Alerts</div>
+                <div class="stat-title">Active Alerts (High)</div>
                 <div class="stat-value" id="activeAlerts">-</div>
             </div>
             <div class="stat-card">
@@ -245,46 +285,64 @@
 
         <div class="section">
             <h2>📡 Recent Alerts</h2>
-            <table id="alertsTable">
-                <thead>
-                    <tr>
-                        <th>Alert ID</th>
-                        <th>Severity</th>
-                        <th>Description</th>
-                        <th>Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody id="alertsTableBody">
-                    <tr><td colspan="4" class="loading">Loading alerts...</td></tr>
-                </tbody>
-            </table>
+            <div id="alertsContainer">
+                <div class="loading">Loading alerts...</div>
+            </div>
         </div>
+        <!-- <div class="section">
+            <h2>📡 Alerts & Monitoring 
+                <button onclick="runHealthCheck()" style="background: #8b5cf6; font-size: 12px; margin-left: 10px;">
+                    🔍 Run Health Check Now
+                </button>
+            </h2>
+            <div id="alertsContainer">
+                <div class="loading">Loading alerts...</div>
+            </div>
+        </div> -->
 
         <div class="section">
             <h2>🛰️ Satellites</h2>
             <button class="add-btn" onclick="showAddSatelliteModal()">+ Add Satellite</button>
-            <table id="satellitesTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Launch Date</th>
-                        <th>Orbit Type</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="satellitesTableBody">
-                    <tr><td colspan="5" class="loading">Loading satellites...</td></tr>
-                </tbody>
-            </table>
+            <!-- <button onclick="reindexSatellites()" style="background: #8b5cf6; margin-left: 10px;">
+                🔄 Fix Sequential IDs
+            </button> -->
+            <div style="overflow-x: auto;">
+                <table id="satellitesTable">
+                    <thead>
+                        <tr>
+                            <th>SeqNO</th>
+                            <th>SatelliteID</th>
+                            <th>Name</th>
+                            <th>Launch Date</th>
+                            <th>Orbit Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="satellitesTableBody">
+                        <tr><td colspan="5" class="loading">Loading satellites...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div> # SeqNo  is not SatelliteID. If you want to know SatelliteID check from Satellites table.</div>
+        <!-- SQL Query Section -->
+        <div class="query-section">
+            <h2>📊 Run SQL Query</h2>
+            <textarea id="queryInput" rows="4" placeholder="Write your SQL query here...&#10;&#10;Example: SELECT * FROM Satellites"></textarea>
+            <br><br>
+            <button onclick="runQuery()" style="background: #8b5cf6;">▶ Run Query</button>
+            <div id="result" class="result-table" style="margin-top:20px;"></div>
         </div>
     </div>
 
     <!-- Modal for Add Satellite -->
     <div id="satelliteModal" class="modal">
+        
         <div class="modal-content">
-            <h3>Add New Satellite</h3>
+            <h3>➕ Add New Satellite</h3>
             <div id="modalError" class="error" style="display:none"></div>
+            <div id="modalSuccess" class="success" style="display:none"></div>
+            
             <div class="form-group">
                 <label>Name *</label>
                 <input type="text" id="satName" placeholder="Enter satellite name">
@@ -310,17 +368,14 @@
                     <option value="Maintenance">Maintenance</option>
                 </select>
             </div>
-            <button onclick="addSatellite()">Save Satellite</button>
-            <button onclick="closeModal()">Cancel</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="addSatellite()" style="flex: 1;">Save Satellite</button>
+                
+                <button onclick="closeModal()" style="flex: 1; background: #6b7280;">Cancel</button>
+            </div>
         </div>
     </div>
-    <h2>Run SQL Query</h2>
-
-    <textarea id="queryInput" rows="5" cols="80" placeholder="Write your SQL query here..."></textarea>
-    <br><br>
-    <button onclick="runQuery()">Run Query</button>
-
-    <div id="result" style="margin-top:20px;"></div>
+    
 
     <script>
         const API_BASE = 'http://localhost:3000/api';
@@ -337,6 +392,7 @@
             } catch (error) {
                 document.getElementById('statusDot').className = 'status-dot disconnected';
                 document.getElementById('statusText').textContent = 'API not connected - Make sure server is running';
+                console.error('Connection error:', error);
                 return false;
             }
         }
@@ -351,12 +407,18 @@
                     fetch(`${API_BASE}/operators`).then(r => r.json())
                 ]);
                 
-                document.getElementById('totalSatellites').textContent = satellites.length;
-                document.getElementById('activeAlerts').textContent = alerts.filter(a => a.Severity === 'High').length;
-                document.getElementById('totalStations').textContent = stations.length;
-                document.getElementById('totalOperators').textContent = operators.length;
+                document.getElementById('totalSatellites').textContent = satellites.length || 0;
+                const highAlerts = alerts.filter(a => a.Severity === 'High').length;
+                document.getElementById('activeAlerts').textContent = highAlerts || 0;
+                document.getElementById('totalStations').textContent = stations.length || 0;
+                document.getElementById('totalOperators').textContent = operators.length || 0;
             } catch (error) {
                 console.error('Error loading stats:', error);
+                // Set default values if error
+                document.getElementById('totalSatellites').textContent = 'Error';
+                document.getElementById('activeAlerts').textContent = 'Error';
+                document.getElementById('totalStations').textContent = 'Error';
+                document.getElementById('totalOperators').textContent = 'Error';
             }
         }
 
@@ -364,57 +426,145 @@
         async function loadAlerts() {
             try {
                 const response = await fetch(`${API_BASE}/alerts`);
+                if (!response.ok) throw new Error('Failed to fetch alerts');
                 const alerts = await response.json();
-                const tbody = document.getElementById('alertsTableBody');
+                const container = document.getElementById('alertsContainer');
                 
-                if (alerts.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4">No alerts found</td></tr>';
+                if (!alerts || alerts.length === 0) {
+                    container.innerHTML = '<div class="loading">✅ No active alerts. All systems normal!</div>';
                     return;
                 }
                 
-                tbody.innerHTML = alerts.slice(0, 5).map(alert => `
-                    <tr>
-                        <td>${alert.AlertID}</td>
-                        <td class="severity-${alert.Severity.toLowerCase()}">${alert.Severity}</td>
-                        <td>${alert.Description}</td>
-                        <td>${new Date(alert.CreatedAt).toLocaleString()}</td>
-                    </tr>
-                `).join('');
+                // Group alerts by severity for better display
+                const highAlerts = alerts.filter(a => a.Severity === 'High');
+                const mediumAlerts = alerts.filter(a => a.Severity === 'Medium');
+                const lowAlerts = alerts.filter(a => a.Severity === 'Low');
+                
+                container.innerHTML = `
+                    ${highAlerts.length > 0 ? `
+                        <div style="margin-bottom: 15px;">
+                            <h3 style="color: #dc2626;">🔴 High Risk Alerts (${highAlerts.length})</h3>
+                            ${highAlerts.map(alert => `
+                                <div style="background: #fee2e2; padding: 10px; margin: 5px 0; border-radius: 6px; border-left: 4px solid #dc2626;">
+                                    <strong>⚠️ ${alert.Description}</strong><br>
+                                    <small>${new Date(alert.CreatedAt).toLocaleString()}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${mediumAlerts.length > 0 ? `
+                        <div style="margin-bottom: 15px;">
+                            <h3 style="color: #f59e0b;">🟡 Medium Risk Alerts (${mediumAlerts.length})</h3>
+                            ${mediumAlerts.map(alert => `
+                                <div style="background: #fed7aa; padding: 10px; margin: 5px 0; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                                    <strong>⚠️ ${alert.Description}</strong><br>
+                                    <small>${new Date(alert.CreatedAt).toLocaleString()}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${lowAlerts.length > 0 ? `
+                        <div>
+                            <h3 style="color: #10b981;">🟢 Low Risk Alerts (${lowAlerts.length})</h3>
+                            ${lowAlerts.map(alert => `
+                                <div style="background: #d1fae5; padding: 10px; margin: 5px 0; border-radius: 6px; border-left: 4px solid #10b981;">
+                                    <strong>ℹ️ ${alert.Description}</strong><br>
+                                    <small>${new Date(alert.CreatedAt).toLocaleString()}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                `;
             } catch (error) {
                 console.error('Error loading alerts:', error);
+                document.getElementById('alertsContainer').innerHTML = '<div class="error">Error loading alerts</div>';
             }
         }
 
         // Load satellites
+        // async function loadSatellites() {
+        //     try {
+        //         const response = await fetch(`${API_BASE}/satellites`);
+        //         if (!response.ok) throw new Error('Failed to fetch satellites');
+        //         const satellites = await response.json();
+        //         const tbody = document.getElementById('satellitesTableBody');
+                
+        //         if (!satellites || satellites.length === 0) {
+        //             tbody.innerHTML = '<tr><td colspan="5">No satellites found. Click "Add Satellite" to get started!</td></tr>';
+        //             return;
+        //         }
+        //         // Sort by actual database ID
+        //         satellites.sort((a, b) => {
+        //             const idA = a.satelliteId || a.SatelliteID;
+        //             const idB = b.satelliteId || b.SatelliteID;
+        //             return idA - idB;
+        //         });
+                
+        //         // Display with sequential numbers
+        //         tbody.innerHTML = satellites.map(sat => `
+        //             <tr>
+        //                 <td>${sat.satelliteId || sat.SatelliteID || 'N/A'}</td>
+        //                 <td>${sat.name || sat.Name || 'N/A'}</td>
+        //                 <td>${sat.launchDate || sat.LaunchDate || 'N/A'}</td>
+        //                 <td>${sat.orbitType || sat.OrbitType || 'N/A'}</td>
+        //                 <td>${sat.status || sat.Status || 'N/A'}</td>
+        //             </tr>
+        //         `).join('');
+        //     } catch (error) {
+        //         console.error('Error loading satellites:', error);
+        //         document.getElementById('satellitesTableBody').innerHTML = '<tr><td colspan="5" class="error">Error loading satellites. Make sure backend is running on port 3000</td></tr>';
+        //     }
+        // }
+        // Load satellites with sequential IDs
         async function loadSatellites() {
             try {
                 const response = await fetch(`${API_BASE}/satellites`);
-                const satellites = await response.json();
+                if (!response.ok) throw new Error('Failed to fetch satellites');
+                let satellites = await response.json();
                 const tbody = document.getElementById('satellitesTableBody');
                 
-                if (satellites.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5">No satellites found</td></tr>';
+                if (!satellites || satellites.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6">No satellites found</td></tr>';
                     return;
                 }
                 
-                tbody.innerHTML = satellites.map(sat => `
-                    <tr>
-                        <td>${sat.satelliteId}</td>
-                        <td>${sat.name}</td>
-                        <td>${sat.launchDate || 'N/A'}</td>
-                        <td>${sat.orbitType}</td>
-                        <td>${sat.status}</td>
-                    </tr>
-                `).join('');
+                satellites.sort((a, b) => (a.satelliteId || a.SatelliteID) - (b.satelliteId || b.SatelliteID));
+                
+                tbody.innerHTML = satellites.map((sat, index) => {
+                    const actualId = sat.satelliteId || sat.SatelliteID;
+                    const name = sat.name || sat.Name;
+                    const launchDate = sat.launchDate || sat.LaunchDate;
+                    const orbitType = sat.orbitType || sat.OrbitType;
+                    const status = sat.status || sat.Status;
+                    
+                    return `
+                        <tr>
+                            <td>${index + 1}${' '}
+                            <td>${actualId}${' '}
+                            <td>${name}${' '}
+                            <td>${launchDate || 'N/A'}${' '}
+                            <td>${orbitType || 'N/A'}${' '}
+                            <td>${status || 'N/A'}${' '}
+                            <td>
+                                <button onclick="deleteSatellite(${actualId}, ${index + 1})" 
+                                        style="background: #ef4444; padding: 4px 8px; font-size: 12px;">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             } catch (error) {
                 console.error('Error loading satellites:', error);
-                document.getElementById('satellitesTableBody').innerHTML = '<tr><td colspan="5">Error loading satellites</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6">Error loading satellites</td></tr>';
             }
         }
 
         // Add satellite
         window.addSatellite = async function() {
-            const name = document.getElementById('satName').value;
+            const name = document.getElementById('satName').value.trim();
             const launchDate = document.getElementById('satLaunchDate').value;
             const orbitType = document.getElementById('satOrbitType').value;
             const status = document.getElementById('satStatus').value;
@@ -424,6 +574,11 @@
                 return;
             }
             
+            const saveBtn = document.querySelector('#satelliteModal button:first-of-type');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Adding...';
+            saveBtn.disabled = true;
+            
             try {
                 const response = await fetch(`${API_BASE}/satellites`, {
                     method: 'POST',
@@ -431,22 +586,286 @@
                     body: JSON.stringify({ name, launchDate, orbitType, status })
                 });
                 
-                if (response.ok) {
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    // Satellite added successfully!
+                    let message = `✅ Satellite "${name}" has been added to the system.`;
+                    
+                    // Show alerts as WARNINGS (not errors)
+                    if (result.alerts && result.alerts.length > 0) {
+                        message += `\n\n⚠️ SYSTEM DETECTED THE FOLLOWING RISKS:\n`;
+                        result.alerts.forEach(alert => {
+                            const icon = alert.severity === 'High' ? '🔴' : alert.severity === 'Medium' ? '🟡' : '🟢';
+                            message += `\n${icon} ${alert.severity} RISK: ${alert.description}`;
+                        });
+                        message += `\n\n📌 The satellite has been added successfully, but please address these issues.`;
+                    } else {
+                        message += `\n\n✅ No issues detected. Satellite is operating normally.`;
+                    }
+                    
+                    alert(message);
                     closeModal();
-                    loadSatellites();
-                    loadStats();
+                    await loadSatellites();  // Refresh table
+                    await loadAlerts();       // Refresh alerts section
+                    await loadStats();        // Update dashboard
                 } else {
-                    const error = await response.json();
-                    showModalError(error.error || 'Error adding satellite');
+                    showModalError(result.error || 'Error adding satellite');
                 }
             } catch (error) {
+                console.error('Error:', error);
                 showModalError('Network error: ' + error.message);
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
             }
         };
+
+        // Run SQL Query
+        window.addSatellite = async function() {
+            const name = document.getElementById('satName').value.trim();
+            const launchDate = document.getElementById('satLaunchDate').value;
+            const orbitType = document.getElementById('satOrbitType').value;
+            const status = document.getElementById('satStatus').value;
+            
+            if (!name) {
+                showModalError('Satellite name is required');
+                return;
+            }
+            
+            // Disable button to prevent double submission
+            const saveBtn = event.target;
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+            
+            try {
+                console.log('Sending satellite data:', { name, launchDate, orbitType, status });
+                
+                const response = await fetch(`${API_BASE}/satellites`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, launchDate, orbitType, status })
+                });
+                
+                const result = await response.json();
+                console.log('Response from server:', result);
+                
+                if (response.ok && result.success) {
+                    // Show success message with alerts if any
+                    if (result.alerts && result.alerts.length > 0) {
+                        let alertMsg = `✅ Satellite "${name}" added successfully!\n\n⚠️ AUTO-GENERATED ALERTS:\n`;
+                        result.alerts.forEach(alert => {
+                            alertMsg += `\n   • ${alert.severity}: ${alert.description}`;
+                        });
+                        alert(alertMsg);
+                    } else {
+                        alert(`✅ Satellite "${name}" added successfully! No issues detected.`);
+                    }
+                    
+                    closeModal();
+                    await loadSatellites();
+                    await loadAlerts();
+                    await loadStats();
+                } else {
+                    showModalError(result.error || 'Error adding satellite');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showModalError('Network error: ' + error.message + '. Check if backend is running.');
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        };
+
+
+        async function deleteSatellite(actualId, displayId) {
+            if (!confirm(`Delete satellite #${displayId}? This will also delete related sensors and assignments.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/satellites/${actualId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert(`✅ Satellite #${displayId} deleted successfully`);
+                    await loadSatellites();  // Refresh the list (IDs will renumber automatically)
+                    await loadStats();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error deleting satellite:', error);
+                alert('Error deleting satellite');
+            }
+        }
+        async function runHealthCheck() {
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '🔄 Checking...';
+            button.disabled = true;
+            
+            try {
+                // Call the monitoring endpoint
+                const response = await fetch(`${API_BASE}/monitor/check`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`✅ Health check complete!\n\n${result.message}`);
+                    await loadAlerts();  // Refresh alerts
+                    await loadStats();   // Update stats
+                } else {
+                    alert('Health check failed');
+                }
+            } catch (error) {
+                console.error('Error running health check:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+        // Run SQL Query function - FIXED VERSION
+        async function runQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!query) {
+                resultDiv.innerHTML = '<div class="error">Please enter a SQL query</div>';
+                return;
+            }
+            
+            // Show loading indicator
+            resultDiv.innerHTML = '<div class="loading">⏳ Executing query...</div>';
+            
+            try {
+                console.log('Executing query:', query);
+                
+                const response = await fetch('http://localhost:3000/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                console.log('Query response:', data);
+                
+                if (!response.ok) {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${data.error || 'Query execution failed'}</div>`;
+                    return;
+                }
+                
+                // Check if we got data back
+                if (!data || data.length === 0) {
+                    resultDiv.innerHTML = '<div class="success">✅ Query executed successfully. No rows returned.</div>';
+                    return;
+                }
+                
+                // Display results as table
+                displayQueryResults(data);
+                
+            } catch (err) {
+                console.error('Query error:', err);
+                resultDiv.innerHTML = `<div class="error">❌ Network Error: ${err.message}. Make sure backend is running.</div>`;
+            }
+        }
+
+        // Display query results as table - FIXED VERSION
+        function displayQueryResults(data) {
+            const resultDiv = document.getElementById('result');
+            
+            if (!Array.isArray(data) || data.length === 0) {
+                resultDiv.innerHTML = '<div class="loading">No results found</div>';
+                return;
+            }
+            
+            // Get column headers from first row
+            const columns = Object.keys(data[0]);
+            
+            // Create HTML table
+            let html = '<div style="overflow-x: auto; max-height: 400px; overflow-y: auto;">';
+            html += '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+            
+            // Table header
+            html += '<thead style="position: sticky; top: 0; background: #f3f4f6;">';
+            html += '<tr>';
+            columns.forEach(col => {
+                html += `<th style="padding: 10px; border: 1px solid #e5e7eb; text-align: left; font-weight: 600;">${col}</th>`;
+            });
+            html += '</tr>';
+            html += '</thead>';
+            
+            // Table body
+            html += '<tbody>';
+            data.forEach((row, index) => {
+                const rowColor = index % 2 === 0 ? '#ffffff' : '#f9fafb';
+                html += `<tr style="background: ${rowColor};">`;
+                columns.forEach(col => {
+                    let value = row[col];
+                    // Format null values
+                    if (value === null || value === undefined) {
+                        value = '<span style="color: #9ca3af; font-style: italic;">NULL</span>';
+                    }
+                    // Format dates nicely if they look like dates
+                    else if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+                        value = value;
+                    }
+                    html += `<td style="padding: 8px; border: 1px solid #e5e7eb;">${value}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody>';
+            html += '</table>';
+            html += '</div>';
+            
+            // Add row count
+            html += `<div style="margin-top: 10px; padding: 8px; background: #f3f4f6; border-radius: 6px;">
+                        <strong>📊 Query returned ${data.length} row(s)</strong>
+                    </div>`;
+            
+            resultDiv.innerHTML = html;
+        }
+
+        function displayTable(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById('result').innerHTML = '<div class="loading">No results found</div>';
+                return;
+            }
+
+            let html = '<div style="overflow-x: auto;"><table style="width: 100%; font-size: 12px;">';
+            
+            // Headers
+            html += '<thead><tr>';
+            Object.keys(data[0]).forEach(key => {
+                html += `<th style="padding: 8px; background: #f3f4f6;">${key}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            // Rows
+            data.forEach(row => {
+                html += '<tr>';
+                Object.values(row).forEach(value => {
+                    html += `<td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${value === null ? 'NULL' : value}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById('result').innerHTML = html;
+        }
 
         window.showAddSatelliteModal = function() {
             document.getElementById('satelliteModal').style.display = 'flex';
             document.getElementById('modalError').style.display = 'none';
+            document.getElementById('modalSuccess').style.display = 'none';
             document.getElementById('satName').value = '';
             document.getElementById('satLaunchDate').value = '';
         };
@@ -457,11 +876,58 @@
 
         function showModalError(message) {
             const errorDiv = document.getElementById('modalError');
+            const successDiv = document.getElementById('modalSuccess');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
             setTimeout(() => {
                 errorDiv.style.display = 'none';
             }, 3000);
+        }
+
+        function showModalSuccess(message) {
+            const successDiv = document.getElementById('modalSuccess');
+            const errorDiv = document.getElementById('modalError');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 2000);
+        }
+        // Function to reindex satellites and fix IDs
+        async function reindexSatellites() {
+            if (!confirm('This will reassign sequential IDs to all satellites (1,2,3,4...). Continue?')) {
+                return;
+            }
+            
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '🔄 Reindexing...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE}/satellites/reindex`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`✅ ${result.message}`);
+                    await loadSatellites(); // Refresh the table
+                    await loadStats();      // Update stats
+                } else {
+                    const error = await response.json();
+                    alert('❌ Failed to reindex: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error reindexing:', error);
+                alert('Error: ' + error.message + '. Make sure backend is running.');
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
         }
 
         // Initialize dashboard
@@ -473,74 +939,12 @@
             
             // Refresh every 30 seconds
             setInterval(async () => {
-                await loadStats();
-                await loadAlerts();
-                await loadSatellites();
+                if (await checkConnection()) {
+                    await loadStats();
+                    await loadAlerts();
+                    await loadSatellites();
+                }
             }, 30000);
-        }
-        function runQuery() {
-        const query = document.getElementById("queryInput").value;
-
-        fetch("http://localhost:3000/api/query", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ query })
-        })
-            .then(res => {
-            console.log("RAW RESPONSE:", res); // debug
-            return res.json();
-            })
-            .then(data => {
-            console.log("DATA:", data); // debug
-            displayTable(data);
-            })
-            .catch(err => {
-            console.error("ERROR:", err);
-            document.getElementById("result").innerHTML = "Error: " + err;
-            });
-        }
-
-        function displayTable(data) {
-        const resultDiv = document.getElementById("result");
-
-        console.log("INSIDE displayTable:", data);
-
-        if (!data) {
-            resultDiv.innerHTML = "No data received";
-            return;
-        }
-
-        if (data.error) {
-            resultDiv.innerHTML = "Error: " + data.error;
-            return;
-        }
-
-        if (!Array.isArray(data) || data.length === 0) {
-            resultDiv.innerHTML = "No results";
-            return;
-        }
-
-        let html = "<table border='1'><tr>";
-
-        Object.keys(data[0]).forEach(key => {
-            html += `<th>${key}</th>`;
-        });
-
-        html += "</tr>";
-
-        data.forEach(row => {
-            html += "<tr>";
-            Object.values(row).forEach(value => {
-            html += `<td>${value}</td>`;
-            });
-            html += "</tr>";
-        });
-
-        html += "</table>";
-
-        resultDiv.innerHTML = html;
         }
         
         init();

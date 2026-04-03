@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
- // Add this after app initialization
 const { testConnection, getConnection } = require('./db-config');
+// Start automatic monitoring service
+require('./monitoring-service');
 
 // Import all route handlers
 const satellitesRoutes = require('./routes/satellites');
@@ -15,8 +16,6 @@ const assignmentsRoutes = require('./routes/assignments');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-
 
 // Middleware
 app.use(cors());
@@ -40,35 +39,24 @@ app.get('/api/health', (req, res) => {
         message: 'Satellite Monitoring System API is running',
         version: '1.0.0',
         database: 'MySQL',
-        endpoints: {
-            satellites: 'GET/POST/PUT/DELETE /api/satellites',
-            operators: 'GET/POST /api/operators',
-            groundStations: 'GET/POST /api/ground-stations',
-            sensors: 'GET/POST /api/sensors',
-            telemetry: 'GET /api/telemetry',
-            readings: 'GET /api/readings',
-            alerts: 'GET/POST /api/alerts',
-            assignments: 'GET/POST /api/assignments'
-        }
+        timestamp: new Date().toISOString()
     });
 });
 
-app.post("/api/query", async (req, res) => {
-    // try {
-    //     const query = req.body.query;
-
-    //     const [rows] = await connection.query(query);
-
-    //     res.json(rows);
-    // } catch (err) {
-    //     res.status(500).json({ error: err.message });
-    // }
+// SQL Query endpoint
+app.post('/api/query', async (req, res) => {
     let connection;
     try {
         const { query } = req.body;
         
         if (!query) {
             return res.status(400).json({ error: 'Query is required' });
+        }
+        
+        // Security: Only allow SELECT queries for safety
+        const upperQuery = query.trim().toUpperCase();
+        if (!upperQuery.startsWith('SELECT')) {
+            return res.status(400).json({ error: 'Only SELECT queries are allowed for security' });
         }
         
         connection = await getConnection();
@@ -80,18 +68,29 @@ app.post("/api/query", async (req, res) => {
     } finally {
         if (connection) connection.release();
     }
-    });
+});
 
-    // Error handling middleware
-    app.use((err, req, res, next) => {
-        console.error('Error:', err.stack);
-        res.status(500).json({ error: 'Something went wrong!', message: err.message });
-    });
-    // 404 handler
-    app.use((req, res) => {
-        res.status(404).json({ error: 'Endpoint not found' });
-    });
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err.stack);
+    res.status(500).json({ error: 'Something went wrong!', message: err.message });
+});
 
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ error: `Endpoint not found: ${req.method} ${req.url}` });
+});
+// Manual health check endpoint
+app.post('/api/monitor/check', async (req, res) => {
+    try {
+        const { autoMonitorAndGenerateAlerts } = require('./monitoring-service');
+        await autoMonitorAndGenerateAlerts();
+        res.json({ message: 'Health check completed successfully' });
+    } catch (err) {
+        console.error('Health check error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Start server
 app.listen(PORT, async () => {
@@ -100,30 +99,22 @@ app.listen(PORT, async () => {
     console.log('========================================');
     console.log(`📡 Server running on: http://localhost:${PORT}`);
     console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`📊 Query endpoint: http://localhost:${PORT}/api/query`);
     console.log('========================================\n');
     
     // Test database connection
     const dbConnected = await testConnection();
     if (!dbConnected) {
         console.log('\n⚠️  Server started but database connection failed!');
-        console.log('   Please fix database configuration in db-config.js\n');
+        console.log('   Please check database configuration in db-config.js\n');
     } else {
         console.log('\n✅ System ready! You can now use the frontend.\n');
+        console.log('Available endpoints:');
+        console.log('  GET  /api/satellites');
+        console.log('  POST /api/satellites');
+        console.log('  GET  /api/alerts');
+        console.log('  POST /api/query');
+        console.log('  ... and more\n');
     }
-    
-
-    // app.post("/api/query", async (req, res) => {
-    // try {
-    //     const query = req.body.query;
-
-    //     const [rows] = await connection.query(query); // ✅ correct
-
-    //     res.json(rows);
-    // } catch (err) {
-    //     res.status(500).json({ error: err.message });
-    // }
-    // });
-    app.use(express.json());
-    
 });
 

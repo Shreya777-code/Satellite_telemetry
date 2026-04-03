@@ -6,7 +6,7 @@ const dbConfig = {
     port: 3306,
     user: 'root',              // Your MySQL username (default is 'root')
     password: 'mySQL', // ⚠️ CHANGE THIS to your MySQL password
-    database: 'satellite_telementry',
+    database: 'satellite_telemetry',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
