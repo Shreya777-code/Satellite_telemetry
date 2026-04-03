@@ -16,6 +16,8 @@ const assignmentsRoutes = require('./routes/assignments');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -89,6 +91,7 @@ app.post("/api/query", async (req, res) => {
     app.use((req, res) => {
         res.status(404).json({ error: 'Endpoint not found' });
     });
+
 
 // Start server
 app.listen(PORT, async () => {
