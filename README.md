@@ -1,121 +1,164 @@
-A complete satellite monitoring system with automatic alert generation and real-time database integration.
+# 🛰️ Satellite Telemetry System
 
-🛠️ Technology Stack
-Frontend: HTML5, CSS3, JavaScript
+A **full-stack web application** for real-time satellite tracking, automated anomaly detection, and intelligent alert generation.
 
-Backend: Node.js, Express.js
+When a satellite is added, the system automatically generates all related data including sensors, telemetry packets, operator assignments, and risk-based alerts based on satellite age, status, and orbit type.
 
-Database: MySQL 8.0
+The application features a **modern responsive dashboard**, a **SQL query runner**, and an **automated background monitoring system** that scans for issues every 5 minutes.
 
-API Protocol: REST API
+---
 
-📁 Project Structure
-text
+## 🚀 Tech Stack
+
+* **Frontend:** HTML5, CSS3, JavaScript
+* **Backend:** Node.js, Express.js
+* **Database:** MySQL 8.0
+* **API Protocol:** REST API
+
+---
+
+## 📁 Project Structure
+
+```
 satellite-monitoring-system/
 ├── frontend/
-│   └── index.html          # Main UI
+│   └── index.html              # Main UI
 ├── backend/
-│   ├── server.js           # Main server
-│   ├── db-config.js        # Database config
-│   ├── package.json        # Dependencies
+│   ├── server.js               # Main server
+│   ├── db-config.js            # Database config
+│   ├── package.json            # Dependencies
 │   ├── routes/
-│   │   ├── satellites.js   # Satellite CRUD
-│   │   ├── operators.js    # Operator CRUD
+│   │   ├── satellites.js       # Satellite CRUD
+│   │   ├── operators.js        # Operator CRUD
 │   │   ├── groundStations.js
 │   │   ├── sensors.js
 │   │   ├── telemetry.js
 │   │   ├── readings.js
 │   │   ├── alerts.js
 │   │   └── assignments.js
-│   └── monitoring-service.js # Auto alert generator
+│   └── monitoring-service.js   # Auto alert generator
 └── database/
-    └── create_tables.sql   # Database schema
+    └── create_tables.sql       # Database schema
+```
 
-#Tables Created (8 tables)
-Satellites
+---
 
-Operators
+## 🗄️ Database Schema
 
-GroundStations
+### Tables Created (8 Total)
 
-Sensors
+* Satellites
+* Operators
+* GroundStations
+* Sensors
+* TelemetryPackets
+* SensorReadings
+* Alerts
+* OperatorAssignments
 
-TelemetryPackets
+---
 
-SensorReadings
+## ⚙️ Automated Data Creation
 
-Alerts
+When a **new satellite is added**, the system automatically creates:
 
-OperatorAssignments
+* ✅ 3 Default Sensors
 
-#When Adding a Satellite, System Auto-Creates:
-3 Default Sensors (Temperature, Gyroscope, Magnetometer)
+  * Temperature
+  * Gyroscope
+  * Magnetometer
 
-1 Telemetry Packet (Initial status)
+* ✅ 1 Telemetry Packet (Initial status)
 
-3 Sensor Readings (One per sensor)
+* ✅ 3 Sensor Readings (one per sensor)
 
-Operator Assignment (Auto-assigns to first available)
+* ✅ Operator Assignment (auto-assigned to first available operator)
 
-Risk-based Alerts (Based on age, status, orbit type)
+* ✅ Risk-based Alerts
 
-#Auto-Alert Rules:
-Condition	Severity	Example
-Status = Inactive	High	"Satellite is INACTIVE"
-Age > 10 years	High	"Exceeds operational life"
-Age 5-10 years	Medium	"Schedule maintenance"
-Status = Maintenance	Medium	"In maintenance mode"
-GEO + Active	Low	"Station-keeping check"
+---
 
-#Background Monitoring (Every 5 minutes):
-Checks all satellites for new issues
+## 🚨 Auto-Alert Rules
 
-Generates alerts for persistent problems
+| Condition            | Severity | Example                    |
+| -------------------- | -------- | -------------------------- |
+| Status = Inactive    | High     | "Satellite is INACTIVE"    |
+| Age > 10 years       | High     | "Exceeds operational life" |
+| Age 5–10 years       | Medium   | "Schedule maintenance"     |
+| Status = Maintenance | Medium   | "In maintenance mode"      |
+| GEO + Active         | Low      | "Station-keeping check"    |
 
-No manual intervention needed
+---
 
-#📊 Features
-Dashboard
-Total satellites count
+## 🔄 Background Monitoring
 
-Active alerts by severity
+* Runs automatically **every 5 minutes**
+* Scans all satellites for new issues
+* Generates alerts for persistent problems
+* Requires **no manual intervention**
 
-Ground stations count
+---
 
-Operators count
+## 📊 Features
 
-Recent alerts display
+### 📌 Dashboard
 
-Satellite Management
-Add new satellites (auto-creates related data)
+* Total satellites count
+* Active alerts by severity
+* Ground stations count
+* Operators count
+* Recent alerts display
 
-View all satellites with sequential display
+---
 
-Delete satellites (cascade deletes related data)
+### 🛰️ Satellite Management
 
-Alert System
-Auto-generated based on business rules
+* Add new satellites *(auto-generates related data)*
+* View all satellites *(sequential display)*
+* Delete satellites *(cascade delete enabled)*
 
-Color-coded by severity (Red/High, Yellow/Medium, Green/Low)
+---
 
-Manual alert creation option
+###  Alert System
 
-Delete alerts
+* Auto-generated alerts based on business rules
+* Color-coded severity:
 
-SQL Query Runner
-Execute SELECT queries
+  * 🔴 High
+  * 🟡 Medium
+  * 🟢 Low
+* Manual alert creation
+* Delete alerts
 
-Results displayed as tables
+---
 
-Query history tracking
+###  SQL Query Runner
 
-#📝 Important Notes
-Database Name: Must be satellite_telemetry in both SQL and backend config
+* Execute **SELECT queries only**
+* Results displayed in table format
+* Query history tracking
 
-Auto-Increment IDs: Gaps are normal and don't affect functionality
+---
 
-Cascade Delete: Deleting a satellite removes all related data
+## 📝 Important Notes
 
-Query Safety: Only SELECT queries allowed in frontend SQL runner
+* **Database Name:** Must be `satellite_telemetry` in both SQL and backend config
+* **Auto-Increment IDs:** Gaps are normal and do not affect functionality
+* **Cascade Delete:** Deleting a satellite removes all related data
+* **Query Safety:** Only SELECT queries allowed in frontend SQL runner
+* **Auto-Monitoring:** Runs every 5 minutes (can also be triggered manually)
 
-Auto-Monitoring: Runs every 5 minutes; can be triggered manually
+---
+
+##  Summary
+
+This project demonstrates:
+
+* Full-stack development with **Node.js + MySQL**
+* Complex **relational database design**
+* **Foreign key relationships & cascade operations**
+* **Business rule automation**
+* Real-time monitoring & alert systems
+
+
+
