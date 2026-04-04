@@ -4,7 +4,11 @@ A **full-stack web application** for real-time satellite tracking, automated ano
 
 When a satellite is added, the system automatically generates all related data including sensors, telemetry packets, operator assignments, and risk-based alerts based on satellite age, status, and orbit type.
 
-The application features a **modern responsive dashboard**, a **SQL query runner**, and an **automated background monitoring system** that scans for issues every 5 minutes.
+The application features a **modern responsive dashboard**, a **SQL query runner**, and an **automated background monitoring system** that scans for issues every 5 minutes.It demonstrates complete CRUD operations, foreign key relationships, and business rule automation for a satellite telemetry monitoring system.
+Create → Add satellite (auto-creates sensors, alerts, etc.)
+Read → Dashboard + SQL query runner
+Update → Change satellite status or alerts
+Delete → Remove satellite (cascade deletes everything related)
 
 ---
 
