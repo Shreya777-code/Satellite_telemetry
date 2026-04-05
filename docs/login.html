@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Satellite Monitoring System</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e3c5c, #3b82f6);
+        }
+
+        .box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #1e3c5c;
+        }
+
+        .title p {
+            margin: 5px 0 15px;
+            font-size: 14px;
+            color: gray;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #1e3c5c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2c5a7a;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+    <div class="title">
+        <h1>🛰️ Satellite Monitoring System</h1>
+        <p>Secure Dashboard Login</p>
+    </div>
+
+    <input type="text" id="username" placeholder="Enter Username">
+    <input type="password" id="password" placeholder="Enter Password">
+
+    <button onclick="login()">Login</button>
+</div>
+
+<script>
+function login() {
+    const user = document.getElementById("username").value;
+
+    localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("username", user);
+
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>
