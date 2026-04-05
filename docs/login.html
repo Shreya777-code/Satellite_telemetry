@@ -77,11 +77,16 @@
 <script>
 function login() {
     const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
 
-    localStorage.setItem("loggedIn", "true");
-    localStorage.setItem("username", user);
+    if (pass === "satellite") {
+        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("username", user);
 
-    window.location.href = "index.html";
+        window.location.href = "index.html";
+    } else {
+        alert("Invalid password. Please try again.");
+    }
 }
 </script>
 
