@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+if (!localStorage.getItem("loggedIn")) {
+    window.location.href = "login.html";
+}
+</script>
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Satellite Monitoring System</title>
@@ -263,7 +269,10 @@
 
     <div class="container">
         <h1>🛰️ Satellite Monitoring Dashboard</h1>
-        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h3 id="welcomeUser"></h3>
+    <button onclick="logout()" style="background:#ef4444; padding:8px 12px;">Logout</button>
+</div>
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <div class="stat-title">Total Satellites</div>
@@ -948,6 +957,18 @@
         }
         
         init();
+        // Show username
+const user = localStorage.getItem("username");
+if (user) {
+    document.getElementById("welcomeUser").innerText = "Welcome, " + user;
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem("loggedIn");
+    localStorage.removeItem("username");
+    window.location.href = "login.html";
+}
     </script>
 </body>
-</html>
+</html>                 
